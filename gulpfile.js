@@ -15,7 +15,6 @@ const sass = require("gulp-sass");
 // Clean assets
 function clean() {
   return del(["./public/css"]);
-  console.log('cleaning');
 }
 
 // CSS task
@@ -33,7 +32,7 @@ function css() {
 
 // Watch files
 function watchFiles() {
-  gulp.watch("./scss/**/*", css);
+  gulp.watch("./sass/*", css);
   // gulp.watch("./assets/js/**/*", gulp.series(scriptsLint, scripts));
 }
 
@@ -47,7 +46,7 @@ function spawnServer() {
 // });
 
 // define complex tasks
-const build = gulp.series(clean, gulp.parallel(css));
+const build = gulp.series(clean, gulp.parallel(css, watchFiles, spawnServer));
 const watch = gulp.parallel(watchFiles, spawnServer);
 const spawn = gulp.parallel(spawnServer);
 
@@ -57,4 +56,4 @@ exports.clean = clean;
 exports.build = build;
 exports.watch = watch;
 exports.spawn = spawn;
-exports.default = spawn;
+exports.default = build;
