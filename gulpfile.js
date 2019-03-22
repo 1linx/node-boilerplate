@@ -2,7 +2,8 @@
 
 // Load plugins
 const autoprefixer = require("autoprefixer");
-const cp = require("child_process");
+const browsersync = require("browser-sync").create()
+var nodemon = require('gulp-nodemon');
 const cssnano = require("cssnano");
 const del = require("del");
 // const eslint = require("gulp-eslint");
@@ -27,26 +28,50 @@ function css() {
     .pipe(rename({ suffix: ".min" }))
     .pipe(postcss([autoprefixer(), cssnano()]))
     .pipe(gulp.dest("./public/css/"))
-    // .pipe(browsersync.stream());
+    .pipe(browsersync.stream());
 }
 
 // Watch files
 function watchFiles() {
   gulp.watch("./sass/*", css);
   // gulp.watch("./assets/js/**/*", gulp.series(scriptsLint, scripts));
+  gulp.series(browserSyncReload)
 }
 
-
-function spawnServer() {
-  return cp
-    .spawn('node', ['app.js'], { stdio: 'inherit' });
+// BrowserSync
+function browserSync(done) {
+  browsersync.init(null, {
+		proxy: "http://localhost:3000",
+        files: ["public/**/*.*"],
+        port: 3001,
+	});
+  done();
 }
-// gulp.task('serve', function() {
-//   spawn('node', ['app.js'], { stdio: 'inherit' });
-// });
+
+// BrowserSync Reload
+function browserSyncReload(done) {
+  console.log('reloading ...');
+  browsersync.reload();
+  done();
+}
+
+// Spawn the node server
+function spawnServer(cb) {
+  var started = false;
+	return nodemon({
+		script: 'app.js'
+	}).on('start', function () {
+		// to avoid nodemon being started multiple times
+		// thanks @matthisk
+		if (!started) {
+			cb();
+			started = true;
+		}
+	});
+}
 
 // define complex tasks
-const build = gulp.series(clean, gulp.parallel(css, watchFiles, spawnServer));
+const build = gulp.series(clean, browserSync, gulp.parallel(css, watchFiles, spawnServer));
 const watch = gulp.parallel(watchFiles, spawnServer);
 const spawn = gulp.parallel(spawnServer);
 
